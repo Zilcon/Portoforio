@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>建国・戦争シミュレーション</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+    <div id="app">
+        <h1>建国・戦争シミュレーション</h1>
+
+        <!-- 🌍 全体操作 -->
+        <button id="reset-button" type="button" onclick="resetWorld()">🌍 全ての国をリセット</button>
+        <button id="full-reset-button" type="button" onclick="resetWorld()">🚨 全国家データを完全削除</button>
+
+        <!-- 📥 CSV出力 -->
+        <button id="download-status-csv" type="button">国家ステータスCSV出力</button>
+        <button id="download-war-csv" type="button">戦争データCSV出力</button>
+        <pre id="status-output"></pre>
+        <pre id="war-log-output"></pre>
+
+        <!-- 🌐 世界経済 -->
+        <div id="world-economy-display">世界経済指数: 0.00</div>
+
+        <form id="world-economy-form">
+            <h2>世界経済指数を設定</h2>
+            <label for="world-economy-input">世界経済指数:</label>
+            <input type="number" id="world-economy-input" value="1.0" step="0.1" min="0.1" />
+            <button type="submit">設定</button>
+        </form>
+
+        <form id="world-economy-roulette-form">
+            <h2>世界経済ルーレット</h2>
+            <button id="world-economy-roulette" type="button">世界経済ルーレット</button>
+            <button id="reset-world-economy" type="button">手動設定を解除</button>
+            <label for="world-economy-buff">世界経済バフ（倍率）:</label>
+            <input type="number" id="world-economy-buff" value="1.0" step="0.1" min="0.1">
+        </form>
+
+        <form id="create-nation-form">
+            <h3>新規国家の建国</h3>
+
+            <label for="nation-name">国名:</label>
+            <input type="text" id="nation-name" required>
+
+            <label for="founding-type">建国種別:</label>
+            <select id="founding-type">
+                <option value="normal">通常建国</option>
+                <option value="partial">途中建国（平均の60%）</option>
+                <option value="rebuild">再建国（平均の30%）</option>
+            </select>
+
+            <label for="initial-states">初期ステート数（1〜60）:</label>
+            <input type="number" id="initial-states" min="1" max="60" value="5" required>
+
+            <button type="submit">建国</button>
+        </form>
+
+        <h3>資源の譲渡</h3>
+        <form id="transfer-form">
+            <label for="from-nation">譲渡元:</label>
+            <select id="from-nation"></select>
+
+            <label for="to-nation">譲渡先:</label>
+            <select id="to-nation"></select>
+
+            <label for="transfer-type">譲渡ステータス:</label>
+            <select id="transfer-type">
+                <option value="economicPower">経済</option>
+                <option value="states">ステート</option>
+            </select>
+
+            <label for="transfer-amount">譲渡数:</label>
+            <input type="number" id="transfer-amount" min="1" required>
+
+            <button type="submit">譲渡実行</button>
+        </form>
+
+        <textarea id="bulk-transfer-text" placeholder="譲渡元 譲渡先 数 ステータス（経済またはステート）"></textarea>
+<button id="apply-bulk-transfer">譲渡データ適用</button>
+
+
+
+        <!-- 🗓 イベントシステム -->
+        <div id="event-section">
+            <h2>ランダムイベント</h2>
+            <button id="trigger-event-btn" type="button">イベント発生</button>
+            <label for="event-nation-select">対象国:</label>
+            <select id="event-nation-select">
+                <option value="">（すべての国）</option>
+            </select>
+            <div id="current-event" style="margin-top:10px; padding:10px; background:#fff; border-radius:6px; box-shadow:0 1px 3px rgba(0,0,0,0.1);"></div>
+        </div>
+
+        <hr>
+        <h2>世界経済 一括発展入力</h2>
+<textarea id="world-economy-import-text" rows="10" cols="50" placeholder="例：&#10;ドイツ 経済&#10;イギリス 開発&#10;フランス 植民"></textarea><br>
+        <button id="import-world-economy">一括発展実行</button>
+
+        <h3>国ステータス一括上書き</h3>
+<textarea id="bulk-nation-status" rows="6" cols="60" placeholder="例：&#10;イギリス 20 10 10&#10;ドイツ 20 10 10"></textarea><br>
+        <button id="apply-bulk-nation-status">ステータスを上書きする</button>
+
+        <!-- 🗺 国リスト -->
+        <div id="nation-list">
+            <h2>国一覧</h2>
+        </div>
+
+
+        <!-- ⚔️ 戦争シミュレーション -->
+        <div id="war-section">
+            <h2>⚔️ 戦争シミュレーション</h2>
+            <h3>戦争データ入力:</h3>
+<textarea id="war-import-text" rows="5" cols="80" placeholder="戦争データ[...] を貼り付けてください"></textarea><br>
+            <button id="import-war-data" type="button">戦争データを反映</button>
+
+            <label for="nation-a">A側の国:</label>
+            <select id="nation-a"></select>
+
+            <label for="nation-b">B側の国:</label>
+            <select id="nation-b"></select>
+
+            <label for="battle-count">戦線数:</label>
+            <input type="number" id="battle-count" value="1" min="1" max="10" />
+
+            <button id="setup-strategies" type="button">ステート戦術を設定</button>
+            <div id="strategy-selection-area"></div>
+
+            <button id="start-war" type="button">戦争開始</button>
+            <div id="war-result"></div>
+        </div>
+
+        <!-- 📊 比較表示 -->
+        <div id="compare-section"></div>
+    </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
